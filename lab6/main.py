@@ -106,12 +106,14 @@ def click(event):
     :return: Выводит в консоль информацию о попадании по объекту
     """
     global score
-    l = 0
+    l = 0  # считает количество объектов, по которым не было произведено нажатие
+    # (если оно равно общему числу, то получем промах)
     for i in range(n):  # проверка попадания по шарику
         if (event.pos[0] - ball_opisanye[i][0]) ** 2 + \
                 (event.pos[1] - ball_opisanye[i][1]) ** 2 < ball_opisanye[i][3] ** 2:  # случай попадания
             print('Nice click!')
-            score += 1 + 1 / ball_opisanye[i][3] * 100
+            """Начисление очков, число которых зависит от размера и скорости шарика"""
+            score += 1 + 1 / ball_opisanye[i][3] * 100 + abs(ball_opisanye[i][5]) / 2
             new_ball(ball_opisanye, i)
             for j in range(10):
                 pygame.draw.circle(screen, COLORS[randint(0, 5)], [event.pos[0], event.pos[1]], (j + 1) * 3, 1)
@@ -133,7 +135,8 @@ def click(event):
                                  10)
             else:
                 print('Nice click!')  # случай попадания по зелёному цвету
-                score += 1 + triangle_opisanye[i][2] / 10
+                """Начисление очков, число которых зависит от размера и скорости треугольника"""
+                score += 1 + 100 / triangle_opisanye[i][2] + abs(triangle_opisanye[i][3]) / 3
                 new_triangle(triangle_opisanye, i)
                 for j in range(10):
                     pygame.draw.circle(screen, COLORS[randint(0, 5)], [event.pos[0], event.pos[1]], (j + 1) * 3, 1)
@@ -206,7 +209,55 @@ while not finished:
         """Создание нового треугольника в случае его выхода за пределы экрана"""
         if (triangle_opisanye[i][0] + triangle_opisanye[i][2]) < 0:
             new_triangle(triangle_opisanye, i)
-
+    score = round(score)
     pygame.display.update()
     screen.fill(BLACK)
 pygame.quit()
+
+""" Работа с текстовым файлом 'leaders.txt', являющемся таблицей лучших игроков
+
+Просит ввести имя(без пробела) и сообщает информацию о вхождении в таблицу, указывая на существовании рекорда.
+
+"""
+
+name = input('Введите ваше имя')
+inp = open('leaders.txt', 'r')
+text = inp.read().split('\n')  # делит файл на элементы массива
+tabl = [0] * len(text)  # объединяет в двумерный массив
+for i in range(len(text)):
+    tabl[i] = text[i].split('-')
+schet = 0  # считает количество проверенных строк таблицы
+for i in range(len(text)):
+    if tabl[i][1] == name:  # случай, когда игрок уже есть в таблице
+        print('Вы уже есть в списке')
+        if int(tabl[i][0]) >= score:  # случай, когда игрок не побил свой рекорд
+            print('Не расслабляйтесь,у вас есть более высокий результат')
+            break
+        else:  # случай, когда игрок не побил свой рекорд
+            print('Отлично, вы побили свой рекорд!')
+            z = tabl.pop(i)
+            for j in range(len(text)):
+                if int(tabl[j][0]) < score:
+                    tabl.insert(j, [str(score), name])
+                    break
+    else:
+        schet += 1
+if schet == len(text):  # случай, когда игрока ещё нет в таблице
+    schet = 0
+    print('Вас ещё нет в списке')
+    for j in range(len(text)):
+        if int(tabl[j][0]) < score:
+            tabl.insert(j, [str(score), name])
+            break
+        else:
+            schet += 1
+if schet == len(text):  # обратный перевод двумерного массива в текст
+    tabl.append([str(score), name])
+vivod1 = []
+for i in range(len(tabl)):
+    vivod1.append('-'.join(tabl[i]))
+text2 = '\n'.join(vivod1)
+inp.close()
+out = open('leaders.txt', 'w')
+out.write(text2)
+out.close()
